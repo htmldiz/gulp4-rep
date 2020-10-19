@@ -1,0 +1,9 @@
+node_modules/
+node_modules/*
+/src/assets/css
+/dist
+package-lock.json
+.DS_Store
+**/.DS_Store
+**/package-lock.json
+*/.DS_Store
