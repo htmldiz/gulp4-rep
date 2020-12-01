@@ -21,7 +21,12 @@ function webp_clean(cb) {
 function convertImageToWebp() {
     return src([config.basepath+config.devPaths.images + '**/*.{png,jpg,jpeg}', '!webp'])
         .pipe(webp())
-        .pipe(dest(config.basepath+config.devPaths.images + '/webp'))
+        .pipe(dest(config.basepath+config.distPaths.images + '/webp'))
+}
+function convertImageToWebpdevPaths() {
+    return src([config.basepath+config.devPaths.images + '**/*.{png,jpg,jpeg}', '!webp'])
+        .pipe(webp())
+        .pipe(dest(config.distPaths.images + '/webp'))
 }
 function clean(cb) {
     del.sync(config.sync.server.baseDir);
@@ -106,12 +111,17 @@ function watch_change() {
     watch(config.basepath+config.devPaths.scripts+'**/*.js', series(javascript,  browser_sync_reload));
     // watch('./list_plugins.js', series(pluginsScripts,  browser_sync_reload));
     watch(config.basepath+"**/*.html", series(html_change, browser_sync_reload ));
-    watch(config.basepath+config.devPaths.images + '**/*.{png,jpg,jpeg,svg,webp}', series(webp_clean, convertImageToWebp, images, images_webp ));
+    watch(config.basepath+config.devPaths.images + '**/*.{png,jpg,jpeg,svg,webp}', series(images_clean,webp_clean, convertImageToWebpdevPaths, images, images_webp ));
     watch(config.basepath+config.devPaths.fonts+"**/*.{woff,woff2,otf,ttf}", fonts);
     // watch(config.basepath+config.devPaths.images + '**/*.webp', images_webp);
 }
 function images_webp() {
     return src(config.basepath+config.devPaths.images + '**/*.webp').pipe(dest(config.distPaths.images))
+}
+function images_clean(cb) {
+    // return src(config.basepath+config.distPaths.images + '**/*.webp').pipe(dest(config.distPaths.images))
+    del.sync(config.distPaths.images);
+    cb();
 }
 function images() {
     return src(config.basepath+config.devPaths.images + '**/*.{png,jpg,jpeg,svg}')
@@ -127,5 +137,5 @@ function images() {
         ])))
         .pipe(dest(config.distPaths.images))
 }
-exports.default = series(clean, webp_clean, convertImageToWebp, images, images_webp, fonts, html_change,pluginsScripts, javascript, sass_tocss, css, browser_sync, watch_change);
+exports.default = series(clean, webp_clean, convertImageToWebpdevPaths, images, images_webp, fonts, html_change,pluginsScripts, javascript, sass_tocss, css, browser_sync, watch_change);
 exports.build = series(clean, webp_clean, convertImageToWebp, images, images_webp, fonts, html_change,pluginsScripts, javascript, sass_tocss, css, html_build,images_build,fonts_build);
