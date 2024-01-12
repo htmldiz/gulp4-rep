@@ -1,21 +1,87 @@
-const { watch, series, src, dest,parallel } = require('gulp');
-const browserSync  = require('browser-sync').create();
+import gulp from 'gulp';
+const { watch, series, src, dest,parallel } = gulp;
+import browserSync  from 'browser-sync';
+const bs = browserSync.create();
+import concat       from'gulp-concat';
+import dartSass from 'sass';
+import gulpSass from 'gulp-sass';
+const sass = gulpSass(dartSass);
+import {deleteSync} from 'del';
+import gulpIf       from'gulp-if';
+import cssnano      from'gulp-cssnano';
+import useref       from'gulp-useref';
+import uglify       from'gulp-uglify';
+import imagemin, {gifsicle, optipng} from 'gulp-imagemin';
+import webp         from 'gulp-webp';
+import jpegRecompress from'imagemin-jpeg-recompress';
+import cache          from 'gulp-cache';
 const reload       = browserSync.reload;
-const concat       = require('gulp-concat');
-const sass         = require('gulp-sass');
-const del          = require('del');
-const gulpIf       = require('gulp-if');
-const cssnano      = require('gulp-cssnano');
-const useref       = require('gulp-useref');
-const uglify       = require('gulp-uglify')
-const imagemin       = require('gulp-imagemin')
-const config       = require('./config.js');
-const webp         = require('gulp-webp');
-var jpegRecompress = require('imagemin-jpeg-recompress');
-var cache          = require('gulp-cache')
-const list_plugins = require('./list_plugins.js');
+// PATH for folder/files - relative to gulpfile.js
+var devPaths = {
+  root: 'assets/',
+  allCss: 'assets/scss/plugins.scss',
+  scss: 'assets/scss/',
+  css: 'assets/css/',
+  allScripts: 'assets/js/plugins.js',
+  scripts: 'assets/js/',
+  images: 'assets/images/',
+  fonts: 'assets/fonts/',
+  html: 'dist/',
+  headerFolder: '',
+  headerTpl: '*.html'
+}
+var distPaths = {
+  root: 'dist/assets/',
+  css: 'dist/assets/css/',
+  scripts: 'dist/assets/js/',
+  images: 'dist/assets/images/',
+  fonts: 'dist/assets/fonts/',
+  html: 'dist/',
+  headerFolder: 'build/',
+  headerTpl: 'dist/*.html'
+}
+
+// browserSync
+var sync = {
+  server: {
+    baseDir: "./dist"
+  },
+}
+
+// autoprefixer
+var settingsAutoprefixer = {
+  browsers: [
+    'last 2 versions'
+  ]
+}
+
+// critical css
+var critical = {
+  base: 'dist/',
+  ignore: ['@font-face','content',/url\(/ /*, /.modal/,/.dropdown/*/],
+  include: [/.col-/, /svg/, '.row', '.img-fluid', '.modal'],
+  minify: true,
+  timeout: 3000000,
+  width: 2000,
+  height: 1000
+}
+const config = {
+  critical: critical,
+  devPaths: devPaths,
+  distPaths: distPaths,
+  settingsAutoprefixer: settingsAutoprefixer,
+  basepath: 'src/',
+  sync: sync
+}
+var plugins = [
+  './node_modules/jquery/dist/jquery.js',
+];
+
+const list_plugins = {
+  list: plugins
+}
 function webp_clean(cb) {
-    del.sync(config.basepath+config.devPaths.images + 'webp');
+  deleteSync(config.basepath+config.devPaths.images + 'webp');
     cb();
 }
 function convertImageToWebp() {
@@ -29,8 +95,9 @@ function convertImageToWebpdevPaths() {
         .pipe(dest(config.distPaths.images + '/webp'))
 }
 function clean(cb) {
-    del.sync(config.sync.server.baseDir);
-    del.sync(config.distPaths.headerFolder);
+  console.log(config);
+  deleteSync(config.sync.server.baseDir);
+  deleteSync(config.distPaths.headerFolder);
     cb();
 }
 function browser_sync_reload(cb) {
@@ -126,16 +193,21 @@ function images_clean(cb) {
 function images() {
     return src(config.basepath+config.devPaths.images + '**/*.{png,jpg,jpeg,svg}')
         .pipe(cache(imagemin([
-            imagemin.gifsicle({interlaced: true}),
+            gifsicle({interlaced: true}),
             jpegRecompress({
                 loops:4,
                 min: 50,
                 max: 95,
                 quality:'high'
             }),
-            imagemin.optipng({optimizationLevel: 7})
+            optipng({optimizationLevel: 7})
         ])))
         .pipe(dest(config.distPaths.images))
 }
-exports.default = series(clean, webp_clean, convertImageToWebpdevPaths, images, images_webp, fonts, html_change,pluginsScripts, javascript, sass_tocss, css, browser_sync, watch_change);
-exports.build = series(clean, webp_clean, convertImageToWebp, images, images_webp, fonts, html_change,pluginsScripts, javascript, sass_tocss, css, html_build,images_build,fonts_build);
+const allTasks = series(clean, webp_clean, convertImageToWebpdevPaths, images, images_webp, fonts, html_change,pluginsScripts, javascript, sass_tocss, css, browser_sync, watch_change);
+const buildall = series(clean, webp_clean, convertImageToWebp, images, images_webp, fonts, html_change,pluginsScripts, javascript, sass_tocss, css, html_build,images_build,fonts_build);
+
+export {
+  allTasks as default,
+  buildall as build,
+}
