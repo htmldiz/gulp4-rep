@@ -1,4 +1,5 @@
 // fonts
+@import "../../../node_modules/bootstrap/scss/bootstrap";
 @import "base/fonts";
 
 // variables and mixins
@@ -12,3 +13,7 @@
 
 //components
 @import "components/component";
+html,
+body{
+  border:none !important;
+}
